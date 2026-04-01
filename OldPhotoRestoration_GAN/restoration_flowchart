@@ -1,0 +1,48 @@
+// Core Restoration Pipeline
+digraph RestorationFlow {
+	fontname="Microsoft YaHei" rankdir=TB size="8,10"
+	node [fontname="Microsoft YaHei" shape=box style=filled]
+	subgraph cluster_0 {
+		color=lightgrey label="阶段 I: 数据输入与预处理" style=dashed
+		input [label="原始老照片 (data/inputs)
+[灰度/低清/噪点]" fillcolor="#E1F5FE"]
+		lab_conv [label="颜色空间转换
+(RGB to Lab)" fillcolor="#E1F5FE"]
+	}
+	subgraph cluster_1 {
+		color=blue label="阶段 II: 色彩感知重构" style=rounded
+		dnn_color [label="OpenCV DNN 推理引擎
+(ECCV 2016 Colorization)" fillcolor="#BBDEFB"]
+		ab_pred [label="预测 ab 色度通道
+并合成彩色 L+ab" fillcolor="#BBDEFB"]
+	}
+	subgraph cluster_2 {
+		color=green label="阶段 III: 面部语义修复" style=rounded
+		gfpgan [label="GFPGAN v1.4
+(生成式面部先验)" fillcolor="#C8E6C9"]
+		face_det [label="人脸检测、对齐与重构" fillcolor="#C8E6C9"]
+	}
+	subgraph cluster_3 {
+		color=orange label="阶段 IV: 空间细节增强" style=rounded
+		esrgan [label="Real-ESRGAN (General-x4v3)
+[背景超分与去噪]" fillcolor="#FFE0B2"]
+		output [label="全要素修复结果
+(data/output/All)" fillcolor="#FFF9C4" shape=doublebox]
+	}
+	subgraph cluster_4 {
+		color=red label="阶段 V: 自动化实验评估" style=dashed
+		metrics [label="评估指标计算
+(PSNR / SSIM)" fillcolor="#FFCCBC"]
+		report [label="生成消融实验报表
+(ablation_study_report.txt)" fillcolor="#FFCCBC"]
+	}
+	input -> lab_conv
+	lab_conv -> dnn_color
+	dnn_color -> ab_pred
+	ab_pred -> face_det
+	face_det -> gfpgan
+	gfpgan -> esrgan
+	esrgan -> output
+	output -> metrics
+	metrics -> report
+}
